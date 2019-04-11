@@ -145,7 +145,9 @@ map: {
 | [searchable] | `boolean` | `true` | no | Allow to search for value. Default `true`|
 | [searchFn] | `(term: string, item: any) => boolean` | `null` | no | Allow to filter by custom search function |
 | [clearSearchOnAdd] | `boolean` | `true` | no | Clears search input when item is selected. Default `true`. Default `false` when **closeOnSelect** is `false` |
-| [selectOnTab] | `boolean` | `false` | no | Select marked dropdown item or entered text if `addTag` is `true` using tab. Default `false`|
+| [selectOnTab] | `boolean` | `false` | no | Select marked dropdown item using tab. Default `false`|
+| [selectOnComma] | `boolean` | `false` | no | Select marked dropdown item using comma. Default `false`|
+| [selectOnSemocolon] | `boolean` | `false` | no | Select marked dropdown item using semicolon. Default `false`|
 | [openOnEnter] | `boolean` | `true` | no | Open dropdown using enter. Default `true`|
 | [typeahead] | `Subject` |  `-` | no | Custom autocomplete or advanced filter. |
 | typeToSearchText | `string` | `Type to search` | no | Set custom text when using Typeahead |
