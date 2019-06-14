@@ -80,7 +80,6 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
     @Input() bindLabel: string;
     @Input() bindValue: string;
-    @Input() clearable = true;
     @Input() markFirst = true;
     @Input() placeholder: string;
     @Input() notFoundText: string;
@@ -107,6 +106,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     @Input() selectableGroup = false;
     @Input() selectableGroupAsModel = true;
     @Input() searchFn = null;
+    @Input() trackByFn = null;
     @Input() excludeGroupsFromDefaultSelection = false;
     @Input() clearOnBackspace = true;
 
@@ -117,6 +117,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     @Input() @HostBinding('class.ng-select-multiple') multiple = false;
     @Input() @HostBinding('class.ng-select-taggable') addTag: boolean | AddTagFn = false;
     @Input() @HostBinding('class.ng-select-searchable') searchable = true;
+    @Input() @HostBinding('class.ng-select-clearable') clearable = true;
     @Input() @HostBinding('class.ng-select-opened') isOpen = false;
 
     @Input()
@@ -184,7 +185,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     private _items = [];
     private _itemsAreUsed: boolean;
     private _defaultLabel = 'label';
-    private _primitive = true;
+    private _primitive;
     private _manualOpen: boolean;
     private _pressedKeys: string[] = [];
     private _compareWith: CompareWithFn;
@@ -225,6 +226,13 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
     get hasValue() {
         return this.selectedItems.length > 0;
+    }
+
+    get currentPanelPosition(): DropdownPosition {
+        if (this.dropdownPanel) {
+            return this.dropdownPanel.currentPosition;
+        }
+        return undefined;
     }
 
     ngOnInit() {
@@ -286,7 +294,6 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
                 case KeyCode.Esc:
                     this.close();
                     $event.preventDefault();
-                    $event.stopPropagation();
                     break;
                 case KeyCode.Backspace:
                     this._handleBackspace();
@@ -302,7 +309,6 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         if (target.tagName !== 'INPUT') {
             $event.preventDefault();
         }
-        $event.stopPropagation();
 
         if (target.classList.contains('ng-clear-wrapper')) {
             this.handleClearClick();
@@ -483,6 +489,14 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         return this.clearable && (this.hasValue || this.filterValue) && !this.disabled;
     }
 
+    trackByOption = (_: number, item: NgOption) => {
+        if (this.trackByFn) {
+            return this.trackByFn(item.value);
+        }
+
+        return null;
+    };
+
     get showAddTag() {
         if (!this.filterValue) {
             return false;
@@ -570,7 +584,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     private _setItems(items: any[]) {
         const firstItem = items[0];
         this.bindLabel = this.bindLabel || this._defaultLabel;
-        this._primitive = isDefined(firstItem) ? !isObject(firstItem) : this._primitive;
+        this._primitive = isDefined(firstItem) ? !isObject(firstItem) : this._primitive || this.bindLabel === this._defaultLabel;
         this.itemsList.setItems(items);
         if (items.length > 0 && this.hasValue) {
             this.itemsList.mapSelectedItems();
@@ -703,7 +717,8 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
             if (this.bindValue) {
                 let value = null;
                 if (item.children) {
-                    value = item.value[<string>this.groupBy];
+                    const groupKey = this.groupValue ? this.bindValue : <string>this.groupBy;
+                    value = item.value[groupKey || <string>this.groupBy];
                 } else {
                     value = this.itemsList.resolveNested(item.value, this.bindValue);
                 }
@@ -749,7 +764,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     }
 
     private _handleTab($event: KeyboardEvent) {
-        if (!this.isOpen && !this.addTag) {
+        if (this.isOpen === false && !isDefined(this.addTag)) {
             return;
         }
         if (this.selectOnTab) {
@@ -781,7 +796,6 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         }
 
         $event.preventDefault();
-        $event.stopPropagation();
     }
 
     private _handleSpace($event: KeyboardEvent) {
