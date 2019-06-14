@@ -96,6 +96,8 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     @Input() selectOnTab = false;
     @Input() selectOnComma = false;
     @Input() selectOnSemocolon = false;
+    @Input() selectOnSpace = false;
+    @Input() selectOnLostFocus = false;
     @Input() openOnEnter: boolean;
     @Input() maxSelectedItems: number;
     @Input() groupBy: string | Function;
@@ -404,6 +406,11 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
         if (!this.isOpen || this._manualOpen) {
             return;
         }
+        if (this.selectOnLostFocus) {
+            if (this.showAddTag) {
+                this.selectTag();
+            }
+        }
         this.isOpen = false;
         this._clearSearch();
         this._onTouched();
@@ -529,6 +536,11 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
     onInputBlur($event) {
         this.element.classList.remove('ng-select-focused');
+        if (this.selectOnLostFocus) {
+            if (this.showAddTag) {
+                this.selectTag();
+            }
+        }
         this.blurEvent.emit($event);
         if (!this.isOpen && !this.disabled) {
             this._onTouched();
@@ -774,6 +786,17 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
     private _handleSpace($event: KeyboardEvent) {
         if (this.isOpen || this._manualOpen) {
+            if (this.selectOnSpace) {
+                if (this.itemsList.markedItem) {
+                    this.toggleItem(this.itemsList.markedItem);
+                    $event.preventDefault();
+                } else if (this.showAddTag) {
+                    this.selectTag();
+                    $event.preventDefault();
+                } else {
+                    this.close();
+                }
+            }
             return;
         }
         this.open();
